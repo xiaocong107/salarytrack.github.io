@@ -1,5 +1,4 @@
 let workLogs = JSON.parse(localStorage.getItem('workLogs')) || [];
-// 新增：儲存月結算歷史紀錄的陣列
 let monthlyRecords = JSON.parse(localStorage.getItem('monthlyRecords')) || [];
 
 // 頁面載入時執行初始化
@@ -25,7 +24,6 @@ window.onload = function() {
     });
     document.getElementById('monthFilter').addEventListener('change', renderAll); 
     
-    // 監聽扣除額輸入框變化，自動儲存並觸發計算
     document.getElementById('labourInsurance').addEventListener('change', function() {
         localStorage.setItem('labourInsurance', this.value);
         calculateNetSalary();
@@ -39,8 +37,24 @@ window.onload = function() {
     document.getElementById('labourInsurance').value = localStorage.getItem('labourInsurance') || '0';
     document.getElementById('healthInsurance').value = localStorage.getItem('healthInsurance') || '0';
 
+    // 監聽拉桿，實時更新顯示
+    document.getElementById('workHoursSlider').addEventListener('input', updateTimeDisplay);
+    document.getElementById('workMinutesSlider').addEventListener('input', updateTimeDisplay);
+    updateTimeDisplay(); // 初始載入時顯示一次
+
     renderAll();
 };
+
+/**
+ * 實時更新工時拉桿旁的數字顯示 (c04)
+ */
+function updateTimeDisplay() {
+    const hours = document.getElementById('workHoursSlider').value;
+    const minutes = String(document.getElementById('workMinutesSlider').value).padStart(2, '0');
+    
+    document.getElementById('workHoursValue').textContent = hours;
+    document.getElementById('workMinutesValue').textContent = minutes;
+}
 
 /**
  * 核心渲染函數：處理篩選、渲染清單和日曆。
@@ -60,13 +74,12 @@ function renderAll() {
     updateSummary(filteredLogs);   
     renderCalendar(year, month, filteredLogs); 
     calculateNetSalary(); 
-    renderMonthlyRecords(); // 新增：渲染月結算歷史紀錄
+    renderMonthlyRecords(); 
     saveLogs();
 }
 
 /**
  * 處理月份切換的邏輯。
- * @param {number} delta - 1 代表下個月, -1 代表上個月。
  */
 function changeMonth(delta) {
     const monthFilterInput = document.getElementById('monthFilter');
@@ -87,45 +100,35 @@ function changeMonth(delta) {
 }
 
 /**
- * 計算單日工時和薪資
+ * 新增工時紀錄 (使用拉桿數據) (c04)
  */
-function addLog() {
+function addSliderLog() {
     const hourlyRate = parseFloat(document.getElementById('hourlyRate').value) || 0;
     const logDate = document.getElementById('logDate').value;
-    const startTimeStr = document.getElementById('startTime').value;
-    const endTimeStr = document.getElementById('endTime').value;
-    const breakMinutes = parseFloat(document.getElementById('breakTime').value) || 0;
+    const workHours = parseFloat(document.getElementById('workHoursSlider').value) || 0;
+    const workMinutes = parseFloat(document.getElementById('workMinutesSlider').value) || 0;
     
-    if (!hourlyRate || !logDate || !startTimeStr || !endTimeStr) {
-        alert("請確保時薪、日期和時間都已填寫。");
+    if (!hourlyRate || !logDate) {
+        alert("請確保時薪和日期都已填寫。");
+        return;
+    }
+    if (workHours === 0 && workMinutes === 0) {
+        alert("請設定工時！");
         return;
     }
 
-    const timeToMinutes = (timeString) => {
-        const [hours, minutes] = timeString.split(':').map(Number);
-        return hours * 60 + minutes;
-    };
-    
-    const startMins = timeToMinutes(startTimeStr);
-    const endMins = timeToMinutes(endTimeStr);
-    let workMinutes = (endMins - startMins) - breakMinutes;
-    
-    if (workMinutes < 0) {
-        alert("工時計算結果為負數，請檢查時間輸入。");
-        return;
-    }
-
-    const totalHours = workMinutes / 60.0;
+    // 將總分鐘數轉換為總小時數
+    const totalHours = workHours + (workMinutes / 60.0);
     const calculatedSalary = totalHours * hourlyRate;
 
     const newLog = {
         date: logDate,
         type: '工時',
-        startTime: startTimeStr,
-        endTime: endTimeStr,
-        breakMinutes: breakMinutes,
+        // 移除 startTime, endTime, breakMinutes
         totalHours: totalHours,
-        salary: calculatedSalary
+        salary: calculatedSalary,
+        // 新增顯示用的工時資訊 (c04)
+        workHoursDisplay: `${workHours} 小時 ${workMinutes} 分`
     };
 
     workLogs.push(newLog);
@@ -185,7 +188,7 @@ function calculateNetSalary() {
 }
 
 /**
- * 儲存本月結算紀錄 (新增功能)
+ * 儲存本月結算紀錄
  */
 function saveMonthlyRecord() {
     const month = document.getElementById('monthFilter').value;
@@ -208,14 +211,12 @@ function saveMonthlyRecord() {
         dateSaved: new Date().toLocaleDateString('zh-TW')
     };
 
-    // 檢查是否已存在該月份紀錄，如果存在則更新，否則新增
     const existingIndex = monthlyRecords.findIndex(r => r.month === month);
     if (existingIndex !== -1) {
         monthlyRecords[existingIndex] = record;
         alert(`${month} 結算紀錄已更新！`);
     } else {
         monthlyRecords.push(record);
-        // 確保紀錄按時間排序 (新的在前面)
         monthlyRecords.sort((a, b) => (a.month < b.month) ? 1 : -1);
         alert(`${month} 結算紀錄已儲存！`);
     }
@@ -225,7 +226,7 @@ function saveMonthlyRecord() {
 }
 
 /**
- * 渲染月結算歷史紀錄清單 (新增功能)
+ * 渲染月結算歷史紀錄清單
  */
 function renderMonthlyRecords() {
     const list = document.getElementById('monthlyRecordList');
@@ -236,7 +237,7 @@ function renderMonthlyRecords() {
         return;
     }
 
-    monthlyRecords.forEach((record, index) => {
+    monthlyRecords.forEach((record) => {
         const listItem = document.createElement('li');
         listItem.className = 'monthly-record-item';
         listItem.innerHTML = `
@@ -255,7 +256,7 @@ function renderMonthlyRecords() {
 }
 
 /**
- * 清除所有月結算紀錄 (新增功能)
+ * 清除所有月結算紀錄
  */
 function clearMonthlyRecords() {
     if (confirm("確定要清除所有月結算紀錄嗎？")) {
@@ -266,10 +267,13 @@ function clearMonthlyRecords() {
     }
 }
 
-// ... (以下為維持程式碼完整性的函數，內容與 V4.0 相同，為精簡版面省略) ...
-
 function saveLogs() { localStorage.setItem('workLogs', JSON.stringify(workLogs)); }
-function deleteLog(originalIndex) { workLogs.splice(originalIndex, 1); renderAll(); }
+
+function deleteLog(originalIndex) { 
+    workLogs.splice(originalIndex, 1); 
+    renderAll(); 
+}
+
 function clearLogs() {
     if (confirm("您確定要清除所有工時/請假紀錄嗎？")) {
         workLogs = [];
@@ -296,7 +300,8 @@ function renderLogs(logs) {
         let itemClass = '';
 
         if (log.type === '工時') {
-            detailText = `(${log.startTime} - ${log.endTime}, 休 ${log.breakMinutes} 分) | 工時: ${log.totalHours.toFixed(2)} 小時 | 收入: NT$ ${log.salary.toFixed(0)}`;
+            // 使用新的 workHoursDisplay 屬性 (c04)
+            detailText = `(總時數: ${log.workHoursDisplay}) | 工時: ${log.totalHours.toFixed(2)} 小時 | 收入: NT$ ${log.salary.toFixed(0)}`;
             itemClass = 'log-work';
         } else {
             detailText = `**${log.type}** (不計薪)`;
@@ -312,7 +317,7 @@ function renderLogs(logs) {
     });
 }
 
-// 渲染日曆總結 (月曆)
+// 渲染日曆總結 (月曆) (與 V5.0 相同，為精簡版面省略)
 function renderCalendar(year, month, logs) {
     const calendarDisplay = document.getElementById('calendarDisplay');
     calendarDisplay.innerHTML = '';
