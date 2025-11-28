@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>打工薪資計算器</title>
+    <title>打工薪資計算器 | 實領計算</title>
     <link rel="stylesheet" href="styles.css"> 
 </head>
 <body>
@@ -14,6 +14,7 @@
             <h2>1. 基本設定</h2>
             <label for="hourlyRate">您的時薪 (NT$):</label>
             <input type="number" id="hourlyRate" value="183" min="0">
+            <p class="auto-save-hint">時薪已自動儲存，下次開啟會自動載入。</p>
         </section>
 
         <section class="card log-section">
@@ -52,21 +53,45 @@
 
             <div class="summary-output">
                 <p>總工時: <span id="totalHours">0.00</span> 小時</p>
-                <p class="total-salary">預計薪資: NT$ <span id="totalSalary">0</span></p>
+                <p class="total-salary">應領薪資 (稅前): NT$ <span id="totalSalary">0</span></p>
             </div>
+        </section>
+        
+        <section class="card final-salary-section">
+            <h2>4. 實領薪資結算</h2>
+            <p>本月應領總額: NT$ <span id="payableSalary" class="bold-value">0</span></p>
+
+            <label for="labourInsurance">勞保/團保扣除額 (NT$):</label>
+            <input type="number" id="labourInsurance" value="0" min="0">
+
+            <label for="healthInsurance">健保/其他扣除額 (NT$):</label>
+            <input type="number" id="healthInsurance" value="0" min="0">
+            
+            <button onclick="calculateNetSalary()" class="btn-calculate">計算實領金額</button>
+
+            <p class="final-result">實拿金額: NT$ <span id="netSalary" class="final-value">0</span></p>
+            
+            <button onclick="saveMonthlyRecord()" class="btn-save-record">儲存本月結算</button>
         </section>
 
         <section class="card calendar-section">
-            <h2>4. 上班日曆 (每日收入)</h2>
+            <h2>5. 上班日曆 (每日收入)</h2>
             <div id="calendarDisplay" class="calendar-grid">
                 </div>
         </section>
 
+        <section class="card monthly-record-section">
+            <h2>6. 月實領紀錄</h2>
+            <ul id="monthlyRecordList">
+                </ul>
+            <button onclick="clearMonthlyRecords()" class="btn-danger-small">清除月結算紀錄</button>
+        </section>
+
         <section class="card list-section">
-            <h2>5. 詳細紀錄清單</h2>
+            <h2>7. 詳細紀錄清單</h2>
             <ul id="logList">
                 </ul>
-            <button onclick="clearLogs()" class="btn-danger">清除所有紀錄</button>
+            <button onclick="clearLogs()" class="btn-danger">清除所有工時/請假紀錄</button>
         </section>
     </div>
 
