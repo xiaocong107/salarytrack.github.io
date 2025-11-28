@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>打工薪資計算器</title>
+    <link rel="stylesheet" href="styles.css"> 
+</head>
+<body>
+    <div class="container">
+        <h1>🌑 打工薪資紀錄器</h1>
+        
+        <section class="card rate-section">
+            <h2>1. 基本設定</h2>
+            <label for="hourlyRate">您的時薪 (NT$):</label>
+            <input type="number" id="hourlyRate" value="183" min="0">
+        </section>
+
+        <section class="card log-section">
+            <h2>2. 新增紀錄</h2>
+            <label for="logDate">日期:</label>
+            <input type="date" id="logDate">
+            
+            <div class="time-inputs">
+                <label for="startTime">上班:</label>
+                <input type="time" id="startTime" value="09:00">
+
+                <label for="endTime">下班:</label>
+                <input type="time" id="endTime" value="17:00">
+                
+                <label for="breakTime">休息 (分鐘):</label>
+                <input type="number" id="breakTime" value="60" min="0">
+            </div>
+            
+            <div class="action-buttons">
+                <button onclick="addLog()" class="btn-primary">紀錄工時</button>
+                <button onclick="addLeave('排休')" class="btn-secondary">排休 (不計薪)</button>
+                <button onclick="addLeave('請假')" class="btn-secondary">請假 (不計薪)</button>
+            </div>
+        </section>
+
+        <section class="card summary-section">
+            <h2>3. 月份總結</h2>
+            <div class="filter-controls">
+                <label for="monthFilter">選擇月份:</label>
+                <input type="month" id="monthFilter">
+                <div class="month-changer">
+                    <button onclick="changeMonth(-1)">&#9664; 上個月</button>
+                    <button onclick="changeMonth(1)">下個月 &#9654;</button>
+                </div>
+            </div>
+
+            <div class="summary-output">
+                <p>總工時: <span id="totalHours">0.00</span> 小時</p>
+                <p class="total-salary">預計薪資: NT$ <span id="totalSalary">0</span></p>
+            </div>
+        </section>
+
+        <section class="card calendar-section">
+            <h2>4. 上班日曆 (每日收入)</h2>
+            <div id="calendarDisplay" class="calendar-grid">
+                </div>
+        </section>
+
+        <section class="card list-section">
+            <h2>5. 詳細紀錄清單</h2>
+            <ul id="logList">
+                </ul>
+            <button onclick="clearLogs()" class="btn-danger">清除所有紀錄</button>
+        </section>
+    </div>
+
+    <script src="script.js"></script> 
+</body>
+</html>
